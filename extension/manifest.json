@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Sync",
+  "version": "1.0",
+  "permissions": ["bookmarks", "nativeMessaging"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "Sync Bookmarks",
+    "default_icon": {
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "bs@jcaffrey.com",
+      "strict_min_version": "58.0"
+    }
+  }
+}
