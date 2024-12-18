@@ -1,15 +1,9 @@
-async function getManagedFolder() {
-  const [menuNode] = await chrome.bookmarks.search({ title: "Managed" });
-  if (!menuNode) {
-    throw new Error("Managed folder not found.");
-  }
-  return [menuNode.id, await chrome.bookmarks.getChildren(menuNode.id)];
-}
+const OTHER_BOOKMARKS_ID = "unfiled_____";
+const TOOLBAR_BOOKMARKS_ID = "toolbar_____";
 
-async function syncBookmarks(jsonBookmarks) {
+async function syncBookmarks(parentId, jsonBookmarks) {
   console.log("Syncing bookmarks");
-  const [parentId, existingBookmarks] = await getManagedFolder();
-  console.log(`Managed folder: ${parentId}`);
+  const existingBookmarks = await chrome.bookmarks.getChildren(parentId);
 
   const currentBookmarks = {};
   existingBookmarks.forEach(bookmark => {
@@ -37,7 +31,7 @@ async function syncBookmarks(jsonBookmarks) {
     console.log(`Removed bookmark: ${title}`);
   }
 
-  const [_, updatedBookmarks] = await getManagedFolder();
+  const updatedBookmarks = await chrome.bookmarks.getChildren(parentId);
   for (const [index, title] of Object.keys(jsonBookmarks).entries()) {
     const bookmarkToMove = updatedBookmarks.find(b => b.title === title);
     if (bookmarkToMove) {
@@ -50,7 +44,13 @@ async function syncBookmarks(jsonBookmarks) {
 function onResponse(response) {
   try {
     console.log(`Received ${response}`);
-    syncBookmarks(JSON.parse(response));
+    const json = JSON.parse(response);
+    if ("bar" in json && "other" in json) {
+      syncBookmarks(TOOLBAR_BOOKMARKS_ID, json["bar"]);
+      syncBookmarks(OTHER_BOOKMARKS_ID, json["other"]);
+    } else {
+      syncBookmarks(OTHER_BOOKMARKS_ID, json);
+    }
   } catch (error) {
     console.error("Error syncing bookmarks:", error);
   }
