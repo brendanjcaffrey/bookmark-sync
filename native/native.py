@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import json
-import socket
 import struct
 import sys
-
-def getHostname():
-    return socket.gethostname()
 
 def getMessage():
     rawLength = sys.stdin.buffer.read(4)
@@ -26,15 +23,15 @@ def sendMessage(encodedMessage):
     sys.stdout.buffer.write(encodedMessage['content'])
     sys.stdout.buffer.flush()
 
-def main(user):
+def main(filePath):
     while True:
         receivedMessage = getMessage()
         if receivedMessage == "getFile":
-            file_path = f"/Users/{user}/Development/scripts/bookmarks.json"
-            with open(file_path, 'r') as f:
+            with open(filePath, 'r') as f:
                 content = f.read()
             sendMessage(encodeMessage(content))
 
 if __name__ == "__main__":
-    user = "Brendan" if getHostname().startswith("sonic") else "brendancaffrey"
-    main(user)
+    scriptDir = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(os.path.dirname(scriptDir), 'bookmarks.json')
+    main(filePath)

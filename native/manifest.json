@@ -1,8 +1,7 @@
 {
   "name": "com.jcaffrey.bookmark_sync",
-  "description": "Sync bookmarks between browsers",
-  "path": "/Users/USERNAME/Development/bookmark_sync/native/native.py",
+  "description": "Sync bookmarks",
+  "path": "SCRIPT_DIR/native.py",
   "type": "stdio",
-  "allowed_extensions": ["bs@jcaffrey.com"]
+  "allowed_extensions": ["ALLOWED_EXTENSION"]
 }
-
