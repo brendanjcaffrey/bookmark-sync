@@ -10,15 +10,8 @@ Please follow the steps at [https://support.mozilla.org/en-US/kb/export-firefox-
 
 The file should be in this directory, `bookmarks.json`. If you want to have the file elsewhere, create a symlink via `ln -s /Users/you/path/to/bookmarks.json bookmarks.json`.
 
-If the file looks like this, the extension will delete everything in the "Other Bookmarks" folder and create a new bookmark for each entry in the file:
-```
-{
-    "github": "https://github.com",
-    "firefox addons developer": "https://addons.mozilla.org/en-US/developers/"
-}
-```
+The file uses two top-level groups, `bar` and `other`, mapped to Firefox's **Bookmarks Toolbar** and **Other Bookmarks** folders respectively. Syncing will delete everything in both of those folders and create a new bookmark for each entry in the file:
 
-If the file looks like this, the extension will delete everything in both the "Bookmarks Toolbar" and "Other Bookmarks" folders and create a new bookmark for each entry in the file:
 ```
 {
     "bar": {
@@ -32,9 +25,16 @@ If the file looks like this, the extension will delete everything in both the "B
 }
 ```
 
+### Saving the current tab
+
+The extension can also append the current tab to the JSON file:
+
+- Right-click the extension icon (or anywhere on a page) → **Save current tab to Bookmarks Toolbar** or **Save current tab to Other Bookmarks**
+- Or assign keyboard shortcuts in `about:addons`, Manage Extension Shortcuts
+
 ### Install the native portion
 
-The extension requires an external script to read the `bookmarks.json` file. If you run `native/copy.sh`, it will generate a `manifest.json` file for you from the template in `native/manifest.json` and place it where Firefox expects it to be.
+The extension requires an external script to interact with the `bookmarks.json` file. If you run `native/copy.sh`, it will generate a `manifest.json` file for you from the template in `native/manifest.json` and place it where Firefox expects it to be.
 
 ### Testing the extension
 
@@ -72,4 +72,3 @@ This is a bit more involved, but you won't have to load the extension every time
 - upload the `my-extension.zip` file from earlier
 - wait a bit for it to be approved (you'll get an email notification when it is)
 - click on the latest version and download the `xpi` file, then agree to add the extension
-
