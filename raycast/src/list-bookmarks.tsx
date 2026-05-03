@@ -88,9 +88,23 @@ export default function ListBookmarks() {
     }
   };
 
-  const lowerSearch = searchText.toLowerCase();
-  const matchesSearch = (b: Bookmark) =>
-    !searchText || b.title.toLowerCase().includes(lowerSearch) || b.url.toLowerCase().includes(lowerSearch);
+  const isSearching = searchText.trim().length > 0;
+
+  const sections: { key: string; title: string; items: Bookmark[] }[] = isSearching
+    ? (() => {
+        const scored: { bookmark: Bookmark; score: number }[] = [];
+        for (const b of bookmarks) {
+          const score = scoreBookmark(searchText, b);
+          if (score !== null) scored.push({ bookmark: b, score });
+        }
+        scored.sort((a, b) => b.score - a.score);
+        return [{ key: "results", title: "Search Results", items: scored.map((s) => s.bookmark) }];
+      })()
+    : GROUP_ORDER.map((group) => ({
+        key: group,
+        title: GROUP_LABELS[group],
+        items: bookmarks.filter((b) => b.group === group),
+      })).filter((s) => s.items.length > 0);
 
   return (
     <List
@@ -98,15 +112,14 @@ export default function ListBookmarks() {
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarPlaceholder="Search bookmarks..."
+      filtering={false}
     >
-      {GROUP_ORDER.map((group) => {
-        const items = bookmarks.filter((b) => b.group === group).filter(matchesSearch);
-        if (items.length === 0) return null;
-
+      {sections.map((section) => {
+        const items = section.items;
         return (
           <List.Section
-            key={group}
-            title={GROUP_LABELS[group]}
+            key={section.key}
+            title={section.title}
             subtitle={`${items.length} bookmark${items.length !== 1 ? "s" : ""}`}
           >
             {items.map((bookmark) => (
@@ -194,6 +207,71 @@ function hostnameOf(url: string): string {
   } catch {
     return url;
   }
+}
+
+const BOUNDARY_RE = /[\s\-_./|:?#&=@+]/;
+
+function fuzzyScore(needle: string, haystack: string): number | null {
+  if (!needle) return 0;
+  const n = needle.toLowerCase();
+  const h = haystack.toLowerCase();
+
+  let score = 0;
+  let hIdx = 0;
+  let lastMatch = -1;
+  let consecutive = 0;
+
+  for (let i = 0; i < n.length; i++) {
+    const found = h.indexOf(n[i], hIdx);
+    if (found === -1) return null;
+
+    let cs = 1;
+    if (found === 0) {
+      cs += 10;
+    } else {
+      const prev = haystack[found - 1];
+      const cur = haystack[found];
+      if (BOUNDARY_RE.test(prev)) {
+        cs += 7;
+      } else if (cur !== cur.toLowerCase() && prev === prev.toLowerCase()) {
+        cs += 5;
+      }
+    }
+
+    if (lastMatch !== -1 && found === lastMatch + 1) {
+      consecutive += 1;
+      cs += consecutive * 4;
+    } else {
+      consecutive = 0;
+      if (lastMatch !== -1) cs -= Math.min(found - lastMatch - 1, 6) * 0.5;
+    }
+
+    score += cs;
+    lastMatch = found;
+    hIdx = found + 1;
+  }
+
+  const substrIdx = h.indexOf(n);
+  if (substrIdx !== -1) {
+    score += 20;
+    if (substrIdx === 0) score += 15;
+  }
+
+  score -= haystack.length * 0.02;
+  return score;
+}
+
+function scoreBookmark(needle: string, b: Bookmark): number | null {
+  const trimmed = needle.trim();
+  if (!trimmed) return 0;
+  const titleScore = fuzzyScore(trimmed, b.title);
+  const hostScore = fuzzyScore(trimmed, hostnameOf(b.url));
+  const urlScore = fuzzyScore(trimmed, b.url);
+  if (titleScore === null && hostScore === null && urlScore === null) return null;
+  const t = titleScore !== null ? titleScore * 1.5 : -Infinity;
+  const ho = hostScore !== null ? hostScore * 1.2 : -Infinity;
+  const u = urlScore !== null ? urlScore : -Infinity;
+  return Math.max(t, ho, u);
 }
 
 interface EditBookmarkFormProps {
