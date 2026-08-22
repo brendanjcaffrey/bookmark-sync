@@ -2,7 +2,15 @@ const OTHER_BOOKMARKS_ID = "unfiled_____";
 const TOOLBAR_BOOKMARKS_ID = "toolbar_____";
 const NATIVE_HOST = "com.jcaffrey.bookmark_sync";
 const NOTIFICATION_ID = "bookmark-sync-status";
-const SUCCESS_DISMISS_MS = 4000;
+const DEFAULT_TITLE = "Sync Bookmarks";
+const BADGE_CLEAR_MS = 2000;
+
+// rgba arrays rather than hex strings: firefox silently falls back to the
+// default badge color if it can't parse the value, which is hard to spot
+const BADGE_COLORS = {
+  ok: [46, 125, 50, 255],
+  error: [198, 40, 40, 255],
+};
 
 const MENU_BAR = "add-current-tab-bar";
 const MENU_OTHER = "add-current-tab-other";
@@ -124,23 +132,36 @@ function summarize(totals) {
   return parts.length ? parts.join(", ") : "No changes";
 }
 
-async function showSuccess(title, message) {
-  await chrome.notifications.clear(NOTIFICATION_ID);
-  await chrome.notifications.create(NOTIFICATION_ID, {
-    type: "basic",
-    iconUrl: chrome.runtime.getURL("icon-48.png"),
-    title,
-    message,
-  });
-  setTimeout(
-    () => chrome.notifications.clear(NOTIFICATION_ID),
-    SUCCESS_DISMISS_MS,
-  );
+// the badge is global rather than per-tab: syncing isn't tied to the page the
+// user happens to be on, and the save-tab popup steals focus from it anyway.
+// the token makes a stale timeout leave a newer badge alone.
+let badgeToken = 0;
+
+async function flashBadge(text, state, title) {
+  const token = ++badgeToken;
+  try {
+    // set the color first so there isn't a flash from the previous badge when it was cleared
+    await chrome.action.setBadgeBackgroundColor({ color: BADGE_COLORS[state] });
+    await chrome.action.setBadgeText({ text });
+    await chrome.action.setTitle({ title: title || DEFAULT_TITLE });
+  } catch (e) {
+    console.error("Failed to set badge:", e);
+  }
+  setTimeout(() => {
+    if (token !== badgeToken) return;
+    chrome.action.setBadgeText({ text: "" });
+    chrome.action.setTitle({ title: DEFAULT_TITLE });
+  }, BADGE_CLEAR_MS);
+}
+
+function showSuccess(title, message) {
+  flashBadge("\u2713", "ok", `${title}: ${message}`);
 }
 
 async function showError(title, error) {
   console.error(title, error);
   const message = error && error.message ? error.message : String(error);
+  flashBadge("\u2715", "error", `${title}: ${message}`);
   await chrome.notifications.clear(NOTIFICATION_ID);
   await chrome.notifications.create(NOTIFICATION_ID, {
     type: "basic",
@@ -229,7 +250,7 @@ chrome.action.onClicked.addListener(async () => {
     console.log(`Received ${response}`);
     const json = parseAndValidate(response);
     const totals = await performSync(json);
-    await showSuccess("Bookmarks synced", summarize(totals));
+    showSuccess("Bookmarks synced", summarize(totals));
   } catch (error) {
     await showError("Bookmark sync failed", error);
   }
