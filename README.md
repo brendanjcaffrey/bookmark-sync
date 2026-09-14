@@ -136,3 +136,9 @@ Raycast doesn't allow third-party extensions to add actions to the built-in Clip
 | Delete bookmark                 | ⌘⌫       |
 | Reload bookmarks                | ⌘R       |
 | Reveal bookmarks file in Finder | ⌘⇧O      |
+
+## iOS Safari
+
+To get the bookmarks into Safari on iOS, create a `bookmarks.html` file with `uv run json_to_html.py` and import into macOS Safari from `File > Import Browsing Data from File or Folder...`.
+
+I've made a couple attempts at automating this (using `safari-bookmarks-cli` and overwriting `~/Library/Safari/Bookmarks.plist`), but neither gets picked up by iCloud sync, so doing this manually seems to be the only way.
