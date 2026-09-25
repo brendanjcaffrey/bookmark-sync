@@ -29,6 +29,7 @@ export default function ListBookmarks() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [selectedId, setSelectedId] = useState<string | undefined>();
 
   const loadBookmarks = () => {
     try {
@@ -88,29 +89,21 @@ export default function ListBookmarks() {
     }
   };
 
-  const isSearching = searchText.trim().length > 0;
+  const sections = buildSections(bookmarks, searchText);
 
-  const sections: { key: string; title: string; items: Bookmark[] }[] = isSearching
-    ? (() => {
-        const scored: { bookmark: Bookmark; score: number }[] = [];
-        for (const b of bookmarks) {
-          const score = scoreBookmark(searchText, b);
-          if (score !== null) scored.push({ bookmark: b, score });
-        }
-        scored.sort((a, b) => b.score - a.score);
-        return [{ key: "results", title: "Search Results", items: scored.map((s) => s.bookmark) }];
-      })()
-    : GROUP_ORDER.map((group) => ({
-        key: group,
-        title: GROUP_LABELS[group],
-        items: bookmarks.filter((b) => b.group === group),
-      })).filter((s) => s.items.length > 0);
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+    const top = buildSections(bookmarks, text)[0]?.items[0];
+    setSelectedId(top ? itemId(top) : undefined);
+  };
 
   return (
     <List
       isLoading={isLoading}
       searchText={searchText}
-      onSearchTextChange={setSearchText}
+      onSearchTextChange={handleSearchTextChange}
+      selectedItemId={selectedId}
+      onSelectionChange={(id) => setSelectedId(id ?? undefined)}
       searchBarPlaceholder="Search bookmarks..."
       filtering={false}
     >
@@ -124,7 +117,8 @@ export default function ListBookmarks() {
           >
             {items.map((bookmark) => (
               <List.Item
-                key={`${bookmark.group}:${bookmark.title}:${bookmark.url}`}
+                key={itemId(bookmark)}
+                id={itemId(bookmark)}
                 title={bookmark.title}
                 icon={getFavicon(bookmark.url, { fallback: Icon.Bookmark })}
                 accessories={[{ text: hostnameOf(bookmark.url) }]}
@@ -199,6 +193,29 @@ export default function ListBookmarks() {
       )}
     </List>
   );
+}
+
+type Section = { key: string; title: string; items: Bookmark[] };
+
+function buildSections(bookmarks: Bookmark[], searchText: string): Section[] {
+  if (searchText.trim().length > 0) {
+    const scored: { bookmark: Bookmark; score: number }[] = [];
+    for (const b of bookmarks) {
+      const score = scoreBookmark(searchText, b);
+      if (score !== null) scored.push({ bookmark: b, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return [{ key: "results", title: "Search Results", items: scored.map((s) => s.bookmark) }];
+  }
+  return GROUP_ORDER.map((group) => ({
+    key: group,
+    title: GROUP_LABELS[group],
+    items: bookmarks.filter((b) => b.group === group),
+  })).filter((s) => s.items.length > 0);
+}
+
+function itemId(b: Bookmark): string {
+  return `${b.group}:${b.title}:${b.url}`;
 }
 
 function hostnameOf(url: string): string {
