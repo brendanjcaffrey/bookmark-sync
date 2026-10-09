@@ -114,7 +114,9 @@ Set the path to your JSON bookmarks file in the extension preferences:
 
 1. Open Raycast Preferences
 2. Navigate to Extensions → Bookmark Sync
-3. Set the **Bookmarks File** to the JSON file path (the same file the Firefox extension reads)
+3. Enter the path in **Bookmarks File** (the same file the Firefox extension reads), for example `~/.config/bookmarks.json`. Absolute paths are also supported.
+
+The path is a text field so symlink paths are preserved. To keep separate bookmarks on different computers, set the preference to `~/.config/bookmarks.json` and point each local symlink at its own bookmarks file. The extension expands `~/` to the current user's home directory, so different usernames work even when Raycast syncs the preference.
 
 ### Saving from the clipboard
 

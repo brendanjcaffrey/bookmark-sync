@@ -11,7 +11,7 @@ import {
   Icon,
 } from "@raycast/api";
 import { useState, useEffect } from "react";
-import { addBookmark } from "./lib/bookmarks-store";
+import { addBookmark, resolveBookmarksPath } from "./lib/bookmarks-store";
 import { BookmarkGroup } from "./lib/types";
 
 const GROUP_LABELS: Record<BookmarkGroup, string> = {
@@ -35,7 +35,7 @@ function parseUrl(text: string | undefined): URL | null {
 }
 
 export default function AddBookmark() {
-  const { bookmarksFile } = getPreferenceValues<Preferences>();
+  const bookmarksFile = resolveBookmarksPath(getPreferenceValues<Preferences>().bookmarksPath);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [group, setGroup] = useState<BookmarkGroup>("other");

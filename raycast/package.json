@@ -26,11 +26,11 @@
   ],
   "preferences": [
     {
-      "name": "bookmarksFile",
-      "type": "file",
+      "name": "bookmarksPath",
+      "type": "textfield",
       "required": true,
       "title": "Bookmarks File",
-      "description": "Path to the JSON file used to store bookmarks"
+      "description": "Path to the JSON bookmarks file or symlink. Use ~/.config/bookmarks.json to follow each computer's local symlink."
     }
   ],
   "dependencies": {

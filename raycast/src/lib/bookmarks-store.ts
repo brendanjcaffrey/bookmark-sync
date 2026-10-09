@@ -1,8 +1,13 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import { Bookmark, BookmarkGroup, BookmarksData } from "./types";
 
 const GROUPS: ReadonlyArray<BookmarkGroup> = ["bar", "other"];
+
+export function resolveBookmarksPath(filePath: string): string {
+  return filePath.startsWith("~/") ? path.join(os.homedir(), filePath.slice(2)) : filePath;
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

@@ -14,7 +14,7 @@ import {
 } from "@raycast/api";
 import { useState, useEffect } from "react";
 import { getFavicon } from "@raycast/utils";
-import { readBookmarks, deleteBookmark, editBookmark, moveBookmark } from "./lib/bookmarks-store";
+import { readBookmarks, deleteBookmark, editBookmark, moveBookmark, resolveBookmarksPath } from "./lib/bookmarks-store";
 import { Bookmark, BookmarkGroup } from "./lib/types";
 
 const GROUP_LABELS: Record<BookmarkGroup, string> = {
@@ -25,7 +25,7 @@ const GROUP_LABELS: Record<BookmarkGroup, string> = {
 const GROUP_ORDER: BookmarkGroup[] = ["bar", "other"];
 
 export default function ListBookmarks() {
-  const { bookmarksFile } = getPreferenceValues<Preferences>();
+  const bookmarksFile = resolveBookmarksPath(getPreferenceValues<Preferences>().bookmarksPath);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
